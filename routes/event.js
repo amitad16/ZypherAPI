@@ -5,6 +5,24 @@ const _ = require("lodash");
 const db = require("../server/db/mongoose");
 const { Event } = require("../models/event.models");
 
+// @request GET /event
+router.get("/", (req, res) => {
+  Event.find({}, { __v: 0 }).then(events => {
+    if (!events)
+      return res.status(401).send({
+        success: false,
+        msg: {
+          info: `No events are registered`
+        }
+      });
+
+    return res.status(200).send({
+      success: false,
+      msg: { events }
+    });
+  });
+});
+
 // @request POST /event
 // @body -
 // {

@@ -9,6 +9,24 @@ const db = require("../server/db/mongoose");
 const { User } = require("../models/user.models");
 const { Event } = require("../models/event.models");
 
+// @request GET /user
+router.get("/", (req, res) => {
+  User.find({}, { _id: 0, __v: 0 }).then(users => {
+    if (!users)
+      return res.status(401).send({
+        success: false,
+        msg: {
+          info: `No users are registered`
+        }
+      });
+
+    return res.status(200).send({
+      success: false,
+      msg: { users }
+    });
+  });
+});
+
 // @request POST /user
 // @body -
 // {
