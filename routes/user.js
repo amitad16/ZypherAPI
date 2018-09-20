@@ -8,22 +8,27 @@ const nodemailer = require("nodemailer");
 const db = require("../server/db/mongoose");
 const { User } = require("../models/user.models");
 const { Event } = require("../models/event.models");
+const { responseHandler } = require("./helper/helper");
 
 // @request GET /user
 router.get("/", (req, res) => {
   User.find({}, { _id: 0, __v: 0 }).then(users => {
     if (!users)
-      return res.status(401).send({
-        success: false,
-        msg: {
-          info: `No users are registered`
-        }
+      // return res.status(401).send({
+      //   success: false,
+      //   msg: {
+      //     info: `No users are registered`
+      //   }
+      // });
+      return responseHandler(res, 401, false, {
+        info: `No users are registered`
       });
 
-    return res.status(200).send({
-      success: false,
-      msg: { users }
-    });
+    // return res.status(200).send({
+    //   success: false,
+    //   msg: { users }
+    // });
+    return responseHandler(res, 200, false, { users });
   });
 });
 
@@ -37,11 +42,8 @@ router.post("/", (req, res) => {
   User.findOne({ email: req.body.email })
     .then(user => {
       if (user)
-        return res.status(201).send({
-          success: false,
-          msg: {
-            info: `User with email ${req.body.email} already exist`
-          }
+        return responseHandler(res, 409, false, {
+          info: `User with email ${req.body.email} already exist`
         });
 
       // Create userId
@@ -51,18 +53,15 @@ router.post("/", (req, res) => {
       // Create new User object
       let newUser = new User(body);
       newUser.save().then(user => {
-        return res.status(201).send({
-          success: true,
-          msg: {
-            user: {
-              userId: user.userId,
-              email: user.email
-            }
+        return responseHandler(res, 201, true, {
+          user: {
+            userId: user.userId,
+            email: user.email
           }
         });
       });
     })
-    .catch(err => response(res, 400, false, { err }));
+    .catch(err => responseHandler(res, 400, false, { err }));
 });
 
 // @request PUT /user/add
@@ -79,25 +78,22 @@ router.put("/add", (req, res) => {
   User.findOne({ userId })
     .then(user => {
       if (!user)
-        return res.status(401).send({
-          success: false,
-          msg: { err: `No user with userId: ${userId} found` }
+        return responseHandler(res, 401, false, {
+          err: `No user with userId: ${userId} found`
         });
 
       // Check if User already in the guest list of the event
       if (user.eventId.indexOf(eventId) !== -1) {
-        return res.status(401).send({
-          success: false,
-          msg: { info: `You are already in the guest list of this event` }
+        return responseHandler(res, 401, false, {
+          info: `You are already in the guest list of this event`
         });
       }
 
       Event.findById(eventId).then(event => {
         // Check if event exist
         if (!event)
-          return res.status(401).send({
-            success: false,
-            msg: { err: `No event with eventId: ${eventId} found` }
+          return responseHandler(res, 401, false, {
+            err: `No event with eventId: ${eventId} found`
           });
 
         let body = _.pick(req.body, "eventId", "userId");
@@ -130,21 +126,18 @@ router.put("/add", (req, res) => {
 
             transporter.sendMail(message, (err, info) => {
               if (err)
-                return res
-                  .status(400)
-                  .send({ success: false, msg: { err: `Email sent error` } });
+                return responseHandler(res, 400, false, {
+                  err: `Email sent error`
+                });
 
+              // TEST EMAIL DETAILS
               console.log("Message sent: %s", info.messageId);
               console.log(`Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
-
-              res.status(201).send({
-                success: true,
-                msg: {
-                  user: {
-                    userId: user.userId,
-                    email: user.email,
-                    events: user.eventId
-                  }
+              return responseHandler(res, 201, true, {
+                user: {
+                  userId: user.userId,
+                  email: user.email,
+                  events: user.eventId
                 }
               });
             });
@@ -152,7 +145,7 @@ router.put("/add", (req, res) => {
         });
       });
     })
-    .catch(err => res.status(400).send({ success: false, msg: { err } }));
+    .catch(err => responseHandler(res, 400, false, { err }));
 });
 
 module.exports = router;
