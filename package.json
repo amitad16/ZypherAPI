@@ -20,7 +20,5 @@
     "uuid": "^3.3.2",
     "validator": "^10.7.1"
   },
-  "devDependencies": {
-    "mocha": "^5.2.0"
-  }
+  "devDependencies": {}
 }
